@@ -3,7 +3,7 @@ from flask_cors import CORS
 from flasgger import Swagger
 import requests
 import json
-from config import MODEL_SERVICE_URL, APP_VERSION
+from config import MODEL_SERVICE_URL, APP_VERSION  # TODO: Depends on external config module
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -37,7 +37,7 @@ swagger = Swagger(app, config=swagger_config, template={
     }
 })
 
-# Dummy lib-version data (to be replaced with actual implementation)
+# TODO: Replace with actual implementation from lib-version service
 lib_version_info = {
     "version": "0.1.0",
     "name": "lib-version"
@@ -63,7 +63,7 @@ def get_version():
       200:
         description: Version information
     """
-    # Try to get the model-service version
+    # TODO: Depends on model-service being available and exposing a /version endpoint
     try:
         model_response = requests.get(f"{MODEL_SERVICE_URL}/version", timeout=5)
         if model_response.status_code == 200:
@@ -76,7 +76,7 @@ def get_version():
     return jsonify({
         "app_version": APP_VERSION,
         "model_service": model_version,
-        "lib_version": lib_version_info
+        "lib_version": lib_version_info  # TODO: Depends on lib-version implementation
     })
 
 @app.route('/predict', methods=['POST'])
@@ -107,6 +107,7 @@ def predict():
         
     data = request.get_json()
     
+    # TODO: Depends on model-service being available and exposing a /predict endpoint
     try:
         # Forward the request to the model service
         model_response = requests.post(
