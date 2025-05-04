@@ -33,14 +33,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
           
-      - name: Build and Push Docker Image
+      - name: Build and Push Frontend Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./app-frontend
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ env.version }}
-            ghcr.io/${{ github.repository }}:${{ env.version_major }}.${{ env.version_minor }}.${{ env.version_patch }}
-            ghcr.io/${{ github.repository }}:${{ env.version_major }}.${{ env.version_minor }}.latest
-            ghcr.io/${{ github.repository }}:${{ env.version_major }}.latest
-            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}-frontend:${{ env.version }}
+            ghcr.io/${{ github.repository }}-frontend:${{ env.version_major }}.${{ env.version_minor }}.${{ env.version_patch }}
+            ghcr.io/${{ github.repository }}-frontend:${{ env.version_major }}.${{ env.version_minor }}.latest
+            ghcr.io/${{ github.repository }}-frontend:${{ env.version_major }}.latest
+            ghcr.io/${{ github.repository }}-frontend:latest
+
+      - name: Build and Push Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app-service
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}-backend:${{ env.version }}
+            ghcr.io/${{ github.repository }}-backend:${{ env.version_major }}.${{ env.version_minor }}.${{ env.version_patch }}
+            ghcr.io/${{ github.repository }}-backend:${{ env.version_major }}.${{ env.version_minor }}.latest
+            ghcr.io/${{ github.repository }}-backend:${{ env.version_major }}.latest
+            ghcr.io/${{ github.repository }}-backend:latest

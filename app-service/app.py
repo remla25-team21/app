@@ -5,6 +5,13 @@ import requests
 import json
 from config import MODEL_SERVICE_URL, APP_VERSION  # TODO: Depends on external config module
 
+# Import the version utility from libversion
+try:
+    from libversion import get_version
+    LIB_VERSION_AVAILABLE = True
+except ImportError:
+    LIB_VERSION_AVAILABLE = False
+
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -37,11 +44,29 @@ swagger = Swagger(app, config=swagger_config, template={
     }
 })
 
-# TODO: Replace with actual implementation from lib-version service
-lib_version_info = {
-    "version": "0.1.0",
-    "name": "lib-version"
-}
+# Get version information from libversion
+def get_lib_version_info():
+    """Get version information from libversion library."""
+    if LIB_VERSION_AVAILABLE:
+        try:
+            version = get_version()
+            return {
+                "version": version,
+                "name": "remla25-team21-lib-version",
+                "status": "available"
+            }
+        except Exception as e:
+            return {
+                "name": "remla25-team21-lib-version",
+                "status": "error",
+                "error": str(e)
+            }
+    else:
+        return {
+            "name": "remla25-team21-lib-version",
+            "status": "not installed",
+            "error": "Library not available"
+        }
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -55,7 +80,7 @@ def health_check():
     return jsonify({"status": "ok"})
 
 @app.route('/version', methods=['GET'])
-def get_version():
+def get_version_info():
     """
     Get app and model-service versions
     ---
@@ -63,6 +88,9 @@ def get_version():
       200:
         description: Version information
     """
+    # Get libversion info
+    lib_version_info = get_lib_version_info()
+    
     # TODO: Depends on model-service being available and exposing a /version endpoint
     try:
         model_response = requests.get(f"{MODEL_SERVICE_URL}/version", timeout=5)
@@ -76,7 +104,7 @@ def get_version():
     return jsonify({
         "app_version": APP_VERSION,
         "model_service": model_version,
-        "lib_version": lib_version_info  # TODO: Depends on lib-version implementation
+        "lib_version": lib_version_info
     })
 
 @app.route('/predict', methods=['POST'])
