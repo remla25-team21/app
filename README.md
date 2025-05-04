@@ -8,40 +8,19 @@ This repository contains the backend service and frontend ui of the REMLA25 proj
 
 ## 🚀 How to Build and Run the Project
 
-**Clone the Repository**
+1. **Clone the Repository**
 
 ```bash
 git clone https://github.com/remla25-team21/app.git
 cd app
 ```
-### Backend
-1. **Navigate to app-service**
-``` bash
-cd app-service
-```
 
 2. **Build the Docker Image**
 ``` bash
-docker build -t team21-backend . [Dont forget the "."]
+docker-compose up --build
 ```
 
-3. Run the Container
-```bash
-docker run -p 5000:5000 team21-backend
-```
+3. **Now run the app**
 
-### Frontend
-1. **Navigate to app-frontend**
-``` bash
-cd app-frontend
-```
-
-2. **Build the Docker Image**
-``` bash
-docker build -t team21-frontend . [Dont forget the "."]
-```
-
-3. Run the Container
-```bash
-docker run -p 3000:3000 team21-frontend
-```
+The frontend should run on (http://localhost:3000/)
+The backend can be accessed on (http://localhost:5000/apidocs/)
