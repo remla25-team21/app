@@ -15,7 +15,11 @@ git clone https://github.com/remla25-team21/app.git
 cd app
 ```
 
-2. **Build the Docker Image**
+2. **Build and Run with Docker Compose**
+
+Docker Compose will build two services (from two docker images):
+- Frontend service (running on port 3000)
+- Backend service (running on port 5000)
 ``` bash
 docker-compose up --build
 ```
