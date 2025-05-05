@@ -13,7 +13,13 @@ async function send_review() {
     };
 
     try {
-        const response = await fetch("http://app-service:5000/predict", {  // the name of the backend service defined in docker-compose.yml
+        // Use relative URL or determine API URL based on current hostname
+        // This works in both development and production environments
+        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:5000/predict'  // For local development
+            : '/api/predict';  // For production (assuming API is properly proxied)
+
+        const response = await fetch(apiUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
