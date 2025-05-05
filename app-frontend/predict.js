@@ -17,7 +17,7 @@ async function send_review() {
         // This works in both development and production environments
         const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://localhost:5000/predict'  // For local development
-            : '/api/predict';  // For production (assuming API is properly proxied)
+            : 'http://app-service:5000/predict';  // For docker network
 
         const response = await fetch(apiUrl, {
             method: "POST",

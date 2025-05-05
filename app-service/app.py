@@ -3,9 +3,16 @@ from flask_cors import CORS
 from flasgger import Swagger
 import requests
 import json
+import os
 from loguru import logger
 import sys
-from config import MODEL_SERVICE_URL, LIB_VERSION_AVAILABLE, get_app_version, SWAGGER_CONFIG, SWAGGER_TEMPLATE
+from config import (
+    LIB_VERSION_AVAILABLE, 
+    get_app_version, 
+    SWAGGER_CONFIG, 
+    SWAGGER_TEMPLATE,
+    get_model_service_url
+)
 
 # Configure loguru
 logger.remove()  # Remove default handler
@@ -19,6 +26,23 @@ logger.add(
     backtrace=True,
     diagnose=True,
 )
+
+# Get MODEL_SERVICE_URL dynamically (can be updated at runtime via env var)
+MODEL_SERVICE_URL = get_model_service_url()
+logger.info("Current MODEL_SERVICE_URL: {}", MODEL_SERVICE_URL)
+logger.info("Testing connection to model service at {}", MODEL_SERVICE_URL)
+
+# Test the current MODEL_SERVICE_URL "/" endpoint
+try:
+    response = requests.get(f"{MODEL_SERVICE_URL}/", timeout=5)
+    if response.status_code == 200:
+        logger.info("Model service is reachable at {}", MODEL_SERVICE_URL)
+    else:
+        logger.error("Model service returned status code {}: {}", response.status_code, response.text)
+except requests.RequestException as e:
+    logger.error("Error connecting to model service: {}", str(e))
+    # If the model service is not reachable, we can still start the app
+    # but it will not be able to make predictions until the service is available
 
 # Try to import get_version if LIB_VERSION_AVAILABLE is True
 if LIB_VERSION_AVAILABLE:
@@ -167,10 +191,12 @@ def predict():
     logger.info("Processing prediction for text: '{}'", log_text)
     
     try:
+        # Get the latest MODEL_SERVICE_URL value (in case it was changed)
+        current_model_url = get_model_service_url()
         # Forward the request to the model service
-        logger.info("Forwarding request to model service at {}", MODEL_SERVICE_URL)
+        logger.info("Forwarding request to model service at {}", current_model_url)
         model_response = requests.post(
-            f"{MODEL_SERVICE_URL}/predict",
+            f"{current_model_url}/predict",
             json=data,  # Keep the format as {"data": "input text"}
             headers={"Content-Type": "application/json"},
             timeout=30
