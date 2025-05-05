@@ -37,8 +37,7 @@ def get_model_service_url():
     
     # Validate URL format (basic check)
     if not url.startswith(('http://', 'https://')):
-        # A warning will be logged in app.py when this is called
-        pass
+        logging.warning(f"Invalid MODEL_SERVICE_URL: {url}. It should start with 'http://' or 'https://'.")
     
     return url
 
