@@ -7,28 +7,18 @@ This repository contains the backend service and frontend ui of the REMLA25 proj
 - Docker installed on your system ([Download Docker](https://www.docker.com/products/docker-desktop))
 - For development mode: Python 3.10+ and Node.js 20+
 
-## 🚀 Direct Running (Using Docker)
+## 🚀 Development
 
-1. **Clone the Repository**
+> [!NOTE]
+> The instructions below will only run the frontend and backend services. The complete application requires the `model-service` container as well. For full application deployment, please refer to the [operation](https://github.com/remla25-team21/operation) repository.
+
+
+**Clone the Repository**
 
 ```bash
 git clone https://github.com/remla25-team21/app.git
 cd app
 ```
-
-2. **Build and Run with Docker Compose**
-
-```bash
-docker-compose up --build
-```
-
-3. **Access the Application**
-
-[http://localhost:3000](http://localhost:3000)
-
-## 💻 Development Mode
-
-For development, you can run the frontend and backend services separately:
 
 ### Running the Frontend
 

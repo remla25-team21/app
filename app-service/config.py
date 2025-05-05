@@ -11,7 +11,35 @@ except ImportError:
 load_dotenv()
 
 # API Configuration settings
-MODEL_SERVICE_URL = os.getenv('MODEL_SERVICE_URL', 'http://localhost:5001')  # TODO: Not Implemented
+DEFAULT_MODEL_PORT = 4000
+DEFAULT_MODEL_HOST = 'model-service'  # For docker network
+
+# Get MODEL_SERVICE_URL from environment with fallback
+def get_model_service_url():
+    """
+    Get the MODEL_SERVICE_URL from environment with fallback based on hostname.
+    
+    Returns:
+        str: The model service URL
+    """
+    # First check for runtime environment variable
+    url = os.environ.get('MODEL_SERVICE_URL')
+    
+    if not url:
+        # Check if we're running locally
+        hostname = os.environ.get('HOSTNAME', '')
+        is_local = hostname == 'localhost' or hostname.startswith('127.0.0.1')
+        
+        if is_local:
+            url = f'http://localhost:{DEFAULT_MODEL_PORT}'  # For local development
+        else:
+            url = f'http://{DEFAULT_MODEL_HOST}:{DEFAULT_MODEL_PORT}'  # For docker network
+    
+    # Validate URL format (basic check)
+    if not url.startswith(('http://', 'https://')):
+        logging.warning(f"Invalid MODEL_SERVICE_URL: {url}. It should start with 'http://' or 'https://'.")
+    
+    return url
 
 def get_app_version():
     """Get the application version from libversion."""
