@@ -1,7 +1,8 @@
 FROM python:3.12.3-slim
 
 RUN apt-get update && apt-get install -y \
-    libjpeg-dev
+    libjpeg-dev \
+    git
 
 WORKDIR /app/app-service
 

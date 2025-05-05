@@ -3,45 +3,47 @@ from flask_cors import CORS
 from flasgger import Swagger
 import requests
 import json
-from config import MODEL_SERVICE_URL, APP_VERSION  # TODO: Depends on external config module
+from config import MODEL_SERVICE_URL, LIB_VERSION_AVAILABLE, get_app_version, SWAGGER_CONFIG, SWAGGER_TEMPLATE
+
+# Try to import get_version if LIB_VERSION_AVAILABLE is True
+if LIB_VERSION_AVAILABLE:
+    try:
+        from libversion import get_version
+    except ImportError:
+        get_version = None
+else:
+    get_version = None
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Configure Swagger documentation
-swagger_config = {
-    "headers": [],
-    "specs": [
-        {
-            "endpoint": "apispec",
-            "route": "/apispec.json",
-            "rule_filter": lambda rule: True,  # all routes
-            "model_filter": lambda tag: True,  # all models
-        }
-    ],
-    "static_url_path": "/flasgger_static",
-    "swagger_ui": True,
-    "specs_route": "/apidocs/"  # Changed from "/docs/" to "/apidocs/"
-}
+swagger = Swagger(app, config=SWAGGER_CONFIG, template=SWAGGER_TEMPLATE)
 
-swagger = Swagger(app, config=swagger_config, template={
-    "info": {
-        "title": "App Service API",
-        "description": "API for the app service component",
-        "version": APP_VERSION,
-        "contact": {
-            "name": "Team 21",
-            "url": "https://github.com/remla25-team21"
+# Get version information from libversion
+def get_lib_version_info():
+    """Get version information from libversion library."""
+    if LIB_VERSION_AVAILABLE and get_version:
+        try:
+            version = get_version()
+            return {
+                "version": version,
+                "name": "remla25-team21-lib-version",
+                "status": "available"
+            }
+        except Exception as e:
+            return {
+                "name": "remla25-team21-lib-version",
+                "status": "error",
+                "error": str(e)
+            }
+    else:
+        return {
+            "name": "remla25-team21-lib-version",
+            "status": "not installed",
+            "error": "Library not available"
         }
-    }
-})
-
-# TODO: Replace with actual implementation from lib-version service
-lib_version_info = {
-    "version": "0.1.0",
-    "name": "lib-version"
-}
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -55,7 +57,7 @@ def health_check():
     return jsonify({"status": "ok"})
 
 @app.route('/version', methods=['GET'])
-def get_version():
+def get_version_info():
     """
     Get app and model-service versions
     ---
@@ -63,6 +65,12 @@ def get_version():
       200:
         description: Version information
     """
+    # Get libversion info
+    lib_version_info = get_lib_version_info()
+    
+    # Use lib_version for app_version
+    app_version = get_app_version()
+    
     # TODO: Depends on model-service being available and exposing a /version endpoint
     try:
         model_response = requests.get(f"{MODEL_SERVICE_URL}/version", timeout=5)
@@ -74,9 +82,9 @@ def get_version():
         model_version = {"error": "Could not connect to model service"}
     
     return jsonify({
-        "app_version": APP_VERSION,
+        "app_version": app_version,
         "model_service": model_version,
-        "lib_version": lib_version_info  # TODO: Depends on lib-version implementation
+        "lib_version": lib_version_info  # NOTE: Same as app_version
     })
 
 @app.route('/predict', methods=['POST'])
@@ -107,7 +115,6 @@ def predict():
         
     data = request.get_json()
     
-    # TODO: Depends on model-service being available and exposing a /predict endpoint
     try:
         # Forward the request to the model service
         model_response = requests.post(

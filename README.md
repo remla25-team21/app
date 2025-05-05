@@ -5,8 +5,9 @@ This repository contains the backend service and frontend ui of the REMLA25 proj
 ## ✅ Prerequisites
 
 - Docker installed on your system ([Download Docker](https://www.docker.com/products/docker-desktop))
+- For development mode: Python 3.10+ and Node.js 20+
 
-## 🚀 How to Build and Run the Project
+## 🚀 Direct Running (Using Docker)
 
 1. **Clone the Repository**
 
@@ -17,14 +18,69 @@ cd app
 
 2. **Build and Run with Docker Compose**
 
-Docker Compose will build two services (from two docker images):
-- Frontend service (running on port 3000)
-- Backend service (running on port 5000)
-``` bash
+```bash
 docker-compose up --build
 ```
 
-3. **Now run the app**
+3. **Access the Application**
 
-The frontend should run on (http://localhost:3000/)
-The backend can be accessed on (http://localhost:5000/apidocs/)
+[http://localhost:3000](http://localhost:3000)
+
+## 💻 Development Mode
+
+For development, you can run the frontend and backend services separately:
+
+### Running the Frontend
+
+1. **Navigate to the frontend directory**
+
+```bash
+cd app-frontend
+```
+
+2. **Install a local server (if not already installed)**
+
+```bash
+npm install -g serve
+```
+
+3. **Serve the static files**
+
+```bash
+serve -s . -l 3000
+```
+
+4. **Access the frontend**
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Running the Backend Service
+
+1. **Navigate to the backend directory**
+
+```bash
+cd app-service
+```
+
+2. **Create and activate a virtual environment (optional but recommended)**
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. **Install dependencies**
+
+```bash
+pip install -r requirements.txt
+```
+
+4. **Run the Flask application**
+
+```bash
+python app.py
+```
+
+5. **Access the backend API**
+
+The API will be available at [http://localhost:5000](http://localhost:5000) with documentation at [http://localhost:5000/apidocs/](http://localhost:5000/apidocs/)
