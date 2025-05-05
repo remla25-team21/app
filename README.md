@@ -9,6 +9,10 @@ This repository contains the backend service and frontend ui of the REMLA25 proj
 
 ## 🚀 Direct Running (Using Docker)
 
+> [!NOTE]
+> The instructions below will only run the frontend and backend services. The complete application requires the `model-service` container as well. For full application deployment, please refer to the [operation](https://github.com/remla25-team21/operation) repository.
+
+
 1. **Clone the Repository**
 
 ```bash

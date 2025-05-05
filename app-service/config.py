@@ -11,7 +11,7 @@ except ImportError:
 load_dotenv()
 
 # API Configuration settings
-MODEL_SERVICE_URL = os.getenv('MODEL_SERVICE_URL', 'http://localhost:5001')  # TODO: Not Implemented
+MODEL_SERVICE_URL = os.getenv('MODEL_SERVICE_URL', 'http://model-service:4000')  # Updated default port to 4000
 
 def get_app_version():
     """Get the application version from libversion."""
