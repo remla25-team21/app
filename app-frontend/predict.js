@@ -13,7 +13,7 @@ async function send_review() {
   };
 
   try {
-    const response = await fetch("http://app-service:5000/predict", {
+    const response = await fetch(`http://localhost:5000/predict`, {
       // the name of the backend service defined in docker-compose.yml
       method: "POST",
       headers: {
