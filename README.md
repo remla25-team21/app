@@ -37,7 +37,7 @@ npm install -g serve
 3. **Serve the static files**
 
 ```bash
-serve -s . -l 3000
+serve . -l 3000
 ```
 
 4. **Access the frontend**
