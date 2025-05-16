@@ -14,4 +14,4 @@ RUN npm install -g serve
 EXPOSE 3000
 
 # Use 'serve' to serve the static files from the current directory
-CMD ["serve", "-s", ".", "-l", "3000"]
+CMD ["serve", ".", "-l", "3000"]

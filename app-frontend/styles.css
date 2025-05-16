@@ -9,6 +9,7 @@ body {
     padding: 40px 20px;
     display: flex;
     justify-content: center;
+    min-height: 100vh;
 }
 
 .container {
@@ -20,8 +21,7 @@ body {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-h1,
-h2 {
+h1, h2, h3 {
     text-align: center;
     margin: 0;
     color: #333;
@@ -30,8 +30,50 @@ h2 {
 h2 {
     margin-bottom: 30px;
     font-weight: normal;
+    color: #666;
 }
 
+h3 {
+    margin: 20px 0;
+    font-size: 1.3rem;
+}
+
+/* Restaurant Selection Page Styles */
+.restaurant-selection {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.restaurant-card {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.restaurant-card:hover {
+    transform: translateY(-5px);
+    border-color: #007bff;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.restaurant-logo {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.restaurant-card h3 {
+    margin: 0;
+    color: #444;
+}
+
+/* Review Page Styles */
 .restaurant-name p {
     font-size: 1.5rem;
     text-align: center;
@@ -78,31 +120,101 @@ button:hover {
     background-color: #0056b3;
 }
 
+.secondary-btn {
+    background-color: #6c757d;
+    margin-top: 20px;
+}
+
+.secondary-btn:hover {
+    background-color: #5a6268;
+}
+
 #prediction {
     font-weight: bold;
-    color: #28a745;
 }
 
 form {
     margin-bottom: 20px;
 }
 
+.prediction-box {
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
 .prediction-positive {
     background: #e9f7ef;
-    padding: 10px 15px;
-    border-radius: 8px;
     border-left: 4px solid #28a745;
-    margin-top: 10px;
-    font-size: 1rem;
     color: #155724;
 }
 
 .prediction-negative {
     background: #f8d7da;
-    padding: 10px 15px;
-    border-radius: 8px;
     border-left: 4px solid #dc3545;
-    margin-top: 10px;
-    font-size: 1rem;
     color: #721c24;
+}
+
+.feedback-options {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.feedback-options p {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.feedback-btn {
+    padding: 8px 15px;
+    margin: 0 5px;
+    font-size: 0.9rem;
+}
+
+#feedback-response {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.feedback-correct {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.feedback-incorrect {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.previous-reviews {
+    margin-top: 30px;
+}
+
+.navigation {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .restaurant-selection {
+        grid-template-columns: 1fr;
+    }
+    
+    .container {
+        padding: 20px;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    h2 {
+        font-size: 1.2rem;
+    }
 }
