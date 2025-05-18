@@ -6,6 +6,9 @@ import json
 import os
 from loguru import logger
 import sys
+import time
+from prometheus_client import Counter, Gauge, Histogram, make_wsgi_app
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from config import (
     LIB_VERSION_AVAILABLE, 
     get_app_version, 
@@ -26,6 +29,37 @@ logger.add(
     backtrace=True,
     diagnose=True,
 )
+
+# Initialize Prometheus metrics
+# 1. Counter for tracking total number of predictions
+PREDICTION_COUNT = Counter(
+    'sentiment_predictions_total', 
+    'Total number of sentiment predictions made',
+    ['sentiment']  # Label to track positive vs negative predictions
+)
+# Initialize common sentiment labels to ensure they appear in /metrics from the start
+PREDICTION_COUNT.labels(sentiment='positive').inc(0)
+PREDICTION_COUNT.labels(sentiment='negative').inc(0)
+PREDICTION_COUNT.labels(sentiment='unknown').inc(0)
+
+# 2. Gauge for tracking ratio of positive to negative sentiments
+SENTIMENT_RATIO = Gauge(
+    'sentiment_positive_ratio',
+    'Ratio of positive to total sentiments (0-1)'
+)
+
+# 3. Histogram for tracking prediction response time
+PREDICTION_LATENCY = Histogram(
+    'sentiment_prediction_latency_seconds',
+    'Time taken to process a sentiment prediction',
+    buckets=[0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]  # Buckets in seconds
+)
+
+# Initialize counters for calculating the ratio
+# Note: These global variables may not behave as expected in a multi-worker setup
+# without specific prometheus_client multi-process configuration.
+positive_count = 0
+total_count = 0
 
 # Get MODEL_SERVICE_URL dynamically (can be updated at runtime via env var)
 MODEL_SERVICE_URL = get_model_service_url()
@@ -56,6 +90,11 @@ else:
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Add Prometheus WSGI middleware to expose metrics
+app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
+    '/metrics': make_wsgi_app()
+})
 
 # Configure Swagger documentation
 swagger = Swagger(app, config=SWAGGER_CONFIG, template=SWAGGER_TEMPLATE)
@@ -174,6 +213,9 @@ def predict():
     """
     logger.info("Prediction request received")
     
+    # Start timing for latency histogram
+    start_time = time.time()
+    
     if not request.is_json:
         logger.warning("Prediction request not in JSON format")
         return jsonify({"error": "Request must be JSON"}), 400
@@ -205,16 +247,96 @@ def predict():
         if model_response.status_code == 200:
             prediction_result = model_response.json()
             logger.info("Prediction successful: {}", prediction_result)
+            
+            # Update metrics for successful predictions
+            original_sentiment_val = prediction_result.get("prediction", "unknown")
+            
+            # Normalize sentiment:
+            # Convert to lowercase string to handle "0"/"1" (str or int) 
+            # and "positive"/"negative" (case-insensitive).
+            normalized_input_str = str(original_sentiment_val).lower()
+
+            final_sentiment_label: str
+            if normalized_input_str == "1" or normalized_input_str == "positive":
+                final_sentiment_label = "positive"
+            elif normalized_input_str == "0" or normalized_input_str == "negative":
+                final_sentiment_label = "negative"
+            else:
+                # This covers "unknown" from .get() or any other unexpected values.
+                final_sentiment_label = "unknown"
+                # Log a warning if the original value was not 'unknown' and didn't map to positive/negative.
+                if normalized_input_str != "unknown":
+                    logger.warning(
+                        f"Unexpected sentiment value '{original_sentiment_val}' received from model. "
+                        f"Normalized to '{final_sentiment_label}' for metrics."
+                    )
+            
+            # 1. Update the prediction counter with the normalized sentiment label
+            PREDICTION_COUNT.labels(sentiment=final_sentiment_label).inc()
+
+            # 2. Update the positive/negative ratio
+            global positive_count, total_count
+            total_count += 1
+            if final_sentiment_label == "positive": 
+                positive_count += 1
+            
+            # Update the gauge with the new ratio
+            if total_count > 0:
+                SENTIMENT_RATIO.set(positive_count / total_count)
+            else:
+                SENTIMENT_RATIO.set(0)
         else:
             logger.error("Model service returned error status code: {}", model_response.status_code)
             logger.error("Model service error response: {}", model_response.text)
+        
+        # Calculate elapsed time and record in the histogram
+        elapsed_time = time.time() - start_time
+        PREDICTION_LATENCY.observe(elapsed_time)
         
         return jsonify(model_response.json()), model_response.status_code
         
     except requests.RequestException as e:
         error_msg = f"Error connecting to model service: {str(e)}"
         logger.error(error_msg)
+        
+        # Record the latency even for errors
+        elapsed_time = time.time() - start_time
+        PREDICTION_LATENCY.observe(elapsed_time)
+        
         return jsonify({"error": error_msg}), 500
+
+@app.route('/metrics-info', methods=['GET'])
+def metrics_info():
+    """
+    Get information about available metrics
+    ---
+    responses:
+      200:
+        description: Metrics information
+    """
+    metrics_description = {
+        "metrics_endpoint": "/metrics",
+        "available_metrics": [
+            {
+                "name": "sentiment_predictions_total",
+                "type": "Counter",
+                "description": "Total number of sentiment predictions made",
+                "labels": ["sentiment"]
+            },
+            {
+                "name": "sentiment_positive_ratio",
+                "type": "Gauge",
+                "description": "Ratio of positive to total sentiments (0-1). Note: In multi-worker setups, this reflects worker-local state unless PROMETHEUS_MULTIPROC_DIR is configured."
+            },
+            {
+                "name": "sentiment_prediction_latency_seconds",
+                "type": "Histogram",
+                "description": "Time taken to process a sentiment prediction",
+                "buckets": [0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+            }
+        ]
+    }
+    return jsonify(metrics_description)
 
 if __name__ == '__main__':
     # For development only
