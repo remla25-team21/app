@@ -37,6 +37,10 @@ PREDICTION_COUNT = Counter(
     'Total number of sentiment predictions made',
     ['sentiment']  # Label to track positive vs negative predictions
 )
+# Initialize common sentiment labels to ensure they appear in /metrics from the start
+PREDICTION_COUNT.labels(sentiment='positive').inc(0)
+PREDICTION_COUNT.labels(sentiment='negative').inc(0)
+PREDICTION_COUNT.labels(sentiment='unknown').inc(0)
 
 # 2. Gauge for tracking ratio of positive to negative sentiments
 SENTIMENT_RATIO = Gauge(
@@ -52,6 +56,8 @@ PREDICTION_LATENCY = Histogram(
 )
 
 # Initialize counters for calculating the ratio
+# Note: These global variables may not behave as expected in a multi-worker setup
+# without specific prometheus_client multi-process configuration.
 positive_count = 0
 total_count = 0
 
@@ -243,19 +249,42 @@ def predict():
             logger.info("Prediction successful: {}", prediction_result)
             
             # Update metrics for successful predictions
-            sentiment = prediction_result.get("prediction", "unknown")
+            original_sentiment_val = prediction_result.get("prediction", "unknown")
             
-            # 1. Update the prediction counter with the sentiment label
-            PREDICTION_COUNT.labels(sentiment=sentiment).inc()
+            # Normalize sentiment:
+            # Convert to lowercase string to handle "0"/"1" (str or int) 
+            # and "positive"/"negative" (case-insensitive).
+            normalized_input_str = str(original_sentiment_val).lower()
+
+            final_sentiment_label: str
+            if normalized_input_str == "1" or normalized_input_str == "positive":
+                final_sentiment_label = "positive"
+            elif normalized_input_str == "0" or normalized_input_str == "negative":
+                final_sentiment_label = "negative"
+            else:
+                # This covers "unknown" from .get() or any other unexpected values.
+                final_sentiment_label = "unknown"
+                # Log a warning if the original value was not 'unknown' and didn't map to positive/negative.
+                if normalized_input_str != "unknown":
+                    logger.warning(
+                        f"Unexpected sentiment value '{original_sentiment_val}' received from model. "
+                        f"Normalized to '{final_sentiment_label}' for metrics."
+                    )
             
+            # 1. Update the prediction counter with the normalized sentiment label
+            PREDICTION_COUNT.labels(sentiment=final_sentiment_label).inc()
+
             # 2. Update the positive/negative ratio
             global positive_count, total_count
             total_count += 1
-            if sentiment == "positive":
+            if final_sentiment_label == "positive": 
                 positive_count += 1
             
             # Update the gauge with the new ratio
-            SENTIMENT_RATIO.set(positive_count / total_count if total_count > 0 else 0)
+            if total_count > 0:
+                SENTIMENT_RATIO.set(positive_count / total_count)
+            else:
+                SENTIMENT_RATIO.set(0)
         else:
             logger.error("Model service returned error status code: {}", model_response.status_code)
             logger.error("Model service error response: {}", model_response.text)
@@ -297,7 +326,7 @@ def metrics_info():
             {
                 "name": "sentiment_positive_ratio",
                 "type": "Gauge",
-                "description": "Ratio of positive to total sentiments (0-1)"
+                "description": "Ratio of positive to total sentiments (0-1). Note: In multi-worker setups, this reflects worker-local state unless PROMETHEUS_MULTIPROC_DIR is configured."
             },
             {
                 "name": "sentiment_prediction_latency_seconds",
