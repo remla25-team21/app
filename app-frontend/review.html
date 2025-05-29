@@ -5,10 +5,13 @@
     <meta charset="UTF-8" />
     <title>Restaurant Review Portal</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
+    <div id="version-display" class="version-display">Loading version...</div>
     <div class="container">
+
         <h1>Restaurant Review Portal</h1>
         <div id="restaurant-display" class="restaurant-name">
             <p><strong id="restaurant-name-display">Loading restaurant...</strong></p>
@@ -19,13 +22,12 @@
             <form onsubmit="event.preventDefault(); send_review();">
                 <textarea id="review" name="review" rows="3"
                     placeholder="Write your thoughts about this restaurant..."></textarea>
-                <button type="submit">Send Review</button>
+                <button type="submit"><i class="fa fa-rocket"></i>Send Review</button>
             </form>
             <div id="prediction-box" class="prediction-box" style="display: none;">
                 This review is: <span id="prediction"></span>
-                <!-- Feedback options will be added dynamically by predict.js -->
+                <!-- Star rating will be added here dynamically -->
             </div>
-            <!-- Feedback response will be added dynamically -->
         </div>
 
         <div class="previous-reviews">
@@ -40,6 +42,7 @@
         </div>
     </div>
 
+    <script src="common.js"></script>
     <script src="predict.js"></script>
 </body>
 

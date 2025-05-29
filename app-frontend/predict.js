@@ -52,8 +52,10 @@ async function send_review() {
         predictionBox.className = "prediction-box"; // Default style if result is not 0 or 1
       }
 
-      // Show feedback options after getting prediction
-      showFeedbackOptions();
+      // Show star rating after prediction
+      showStarRating();
+
+      addReviewToList(reviewText, sentiment === "Positive");
     } else {
       throw new Error(result.error || "Unknown prediction error");
     }
@@ -116,86 +118,118 @@ function loadReviews() {
 // Load reviews when the page loads
 window.onload = loadReviews;
 
-// Function to show feedback options after prediction
-function showFeedbackOptions() {
-  // Check if feedback options already exist, create if they don't
-  let feedbackDiv = document.getElementById("feedback-options");
+// Function to show star rating options after prediction
+function showStarRating() {
+  // Check if star rating already exists, create if not
+  let starContainer = document.getElementById("star-rating-container");
 
-  if (!feedbackDiv) {
-    // Create feedback options container
-    feedbackDiv = document.createElement("div");
-    feedbackDiv.id = "feedback-options";
-    feedbackDiv.className = "feedback-options";
+  if (!starContainer) {
+    // Create star rating container
+    starContainer = document.createElement("div");
+    starContainer.id = "star-rating-container";
+    starContainer.className = "star-rating";
 
-    // Create question text
-    const questionPara = document.createElement("p");
-    questionPara.textContent = "Is this prediction correct?";
+    // Create instruction
+    const instruction = document.createElement("p");
+    instruction.textContent = "Rate your experience:";
+    starContainer.appendChild(instruction);
 
-    // Create yes button
-    const yesButton = document.createElement("button");
-    yesButton.className = "feedback-btn";
-    yesButton.textContent = "Yes ✓";
-    yesButton.onclick = function () { provideFeedback(true); };
+    // Create star container
+    const starsDiv = document.createElement("div");
+    starsDiv.className = "stars";
 
-    // Create no button
-    const noButton = document.createElement("button");
-    noButton.className = "feedback-btn";
-    noButton.textContent = "No ✗";
-    noButton.onclick = function () { provideFeedback(false); };
+    // Create 5 stars (from left to right: 1 to 5)
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement("span");
+      star.className = "star fa fa-star";
+      star.dataset.rating = i;
+      // Add hover effects for better user experience
+      star.addEventListener("mouseenter", () => highlightStars(i));
+      star.addEventListener("mouseleave", () => highlightStars(satisfactionRating));
+      star.addEventListener("click", () => setRating(i));
+      starsDiv.appendChild(star);
+    }
 
-    // Add all elements to the feedback div
-    feedbackDiv.appendChild(questionPara);
-    feedbackDiv.appendChild(yesButton);
-    feedbackDiv.appendChild(noButton);
-
-    // Add feedback div to the prediction box
-    document.getElementById("prediction-box").appendChild(feedbackDiv);
+    starContainer.appendChild(starsDiv);
+    document.getElementById("prediction-box").appendChild(starContainer);
   } else {
-    // If it already exists, just make it visible
-    feedbackDiv.style.display = "block";
-  }
-
-  // Hide any previous feedback response
-  const feedbackResponse = document.getElementById("feedback-response");
-  if (feedbackResponse) {
-    feedbackResponse.style.display = "none";
+    starContainer.style.display = "block";
   }
 }
 
-// Handle user feedback on prediction
-function provideFeedback(isCorrect) {
-  // Create or get the feedback response element
-  let feedbackResponse = document.getElementById("feedback-response");
+// Helper function to highlight stars (for hover and selection)
+function highlightStars(rating) {
+  const stars = document.querySelectorAll(".star");
+  stars.forEach((star, index) => {
+    // Clear all classes first
+    star.classList.remove("selected", "hover");
 
-  if (!feedbackResponse) {
-    feedbackResponse = document.createElement("div");
-    feedbackResponse.id = "feedback-response";
-    document.getElementById("prediction-box").appendChild(feedbackResponse);
-  }
+    // Add appropriate class based on rating
+    // index + 1 because arrays are 0-based but ratings are 1-based
+    if (index + 1 <= rating) {
+      if (rating === satisfactionRating) {
+        star.classList.add("selected");
+      } else {
+        star.classList.add("hover");
+      }
+    }
+  });
+}
 
-  const reviewText = document.getElementById("review").value.trim();
-  const sentiment = document.getElementById("prediction").textContent;
+// Set user rating (fixed version)
+function setRating(rating) {
+  // Store the rating
+  satisfactionRating = rating;
 
-  if (isCorrect) {
-    feedbackResponse.innerHTML = '<p class="feedback-correct">Thank you for confirming! Your feedback helps improve our system.</p>';
+  // Debug: Log the rating to console so you can see what was selected
+  console.log(`User selected rating: ${rating} stars`);
 
-    // Add the review to the list of reviews
-    addReviewToList(reviewText, sentiment === "Positive");
-  } else {
-    feedbackResponse.innerHTML = '<p class="feedback-incorrect">Thanks for letting us know! We\'ll use this feedback to improve our predictions.</p>';
+  // Highlight the selected stars
+  highlightStars(rating);
 
-    // In a real system, you would log this misclassification for model improvement
-  }
-
-  feedbackResponse.style.display = "block";
-
-  // Hide the feedback options
-  document.getElementById("feedback-options").style.display = "none";
-
-  // Clear the review input after some time
+  // Show thank you message after a brief delay
   setTimeout(() => {
-    document.getElementById("review").value = "";
-  }, 1500);
+    const starContainer = document.getElementById("star-rating-container");
+    if (starContainer) {
+      // Show both the rating and thank you message
+      starContainer.innerHTML = `
+        <p class="feedback-thanks">
+          Thank you for your ${rating}-star rating! 
+          <span style="color: #ffc107;">★</span>
+        </p>
+      `;
+
+      setTimeout(() => {
+        starContainer.style.display = "none";
+        // Clear the review input
+        document.getElementById("review").value = "";
+
+        // Reset satisfaction rating for next review
+        satisfactionRating = 0;
+      }, 2500); // Increased time so user can see their rating
+    }
+  }, 800);
+}
+
+// Alternative function if you want to see the rating immediately without hiding
+function setRatingWithDisplay(rating) {
+  satisfactionRating = rating;
+  console.log(`User selected rating: ${rating} stars`);
+
+  // Update visual feedback
+  highlightStars(rating);
+
+  // Show current rating below stars
+  let ratingDisplay = document.getElementById("current-rating-display");
+  if (!ratingDisplay) {
+    ratingDisplay = document.createElement("p");
+    ratingDisplay.id = "current-rating-display";
+    ratingDisplay.style.marginTop = "10px";
+    ratingDisplay.style.fontWeight = "bold";
+    document.getElementById("star-rating-container").appendChild(ratingDisplay);
+  }
+
+  ratingDisplay.innerHTML = `Your rating: ${rating} star${rating !== 1 ? 's' : ''} <span style="color: #ffc107;">${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}</span>`;
 }
 
 // Add a new review to the list of previous reviews
