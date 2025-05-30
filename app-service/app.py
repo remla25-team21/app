@@ -55,6 +55,20 @@ PREDICTION_LATENCY = Histogram(
     buckets=[0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]  # Buckets in seconds
 )
 
+# 4. Counter for tracking model usage (predict calls)
+USER_CLICKS = Counter(
+    'model_usage_total',
+    'Total number of model prediction requests',
+    ['experiment_variant']  # Label for A/B test variant
+)
+
+# 5. Histogram for tracking user session duration (continuous experimentation)
+SESSION_DURATION = Histogram(
+    'user_session_duration_seconds',
+    'Duration of user sessions in seconds',
+    buckets=[10, 30, 60, 120, 300, 600, 1200, 1800, 3600]  # Buckets for session length
+)
+
 # Initialize counters for calculating the ratio
 # Note: These global variables may not behave as expected in a multi-worker setup
 # without specific prometheus_client multi-process configuration.
@@ -196,6 +210,10 @@ def predict():
             data:
               type: string
               example: "I love this product!"
+            experiment_variant:
+              type: string
+              example: "variant_a"
+              description: "A/B test variant identifier (optional)"
           required:
             - data
     responses:
@@ -227,10 +245,16 @@ def predict():
         logger.warning("Prediction request missing 'data' field")
         return jsonify({"error": "Missing 'data' field in request"}), 400
     
+    # Extract experiment variant for tracking model usage
+    experiment_variant = data.get('experiment_variant', 'control')
+    
+    # Track model usage (user clicks)
+    USER_CLICKS.labels(experiment_variant=experiment_variant).inc()
+    
     # Log the received text (truncate if too long)
     input_text = data['data']
     log_text = input_text[:100] + "..." if len(input_text) > 100 else input_text
-    logger.info("Processing prediction for text: '{}'", log_text)
+    logger.info("Processing prediction for text: '{}', variant: '{}'", log_text, experiment_variant)
     
     try:
         # Get the latest MODEL_SERVICE_URL value (in case it was changed)
@@ -333,10 +357,132 @@ def metrics_info():
                 "type": "Histogram",
                 "description": "Time taken to process a sentiment prediction",
                 "buckets": [0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+            },
+            {
+                "name": "model_usage_total",
+                "type": "Counter",
+                "description": "Total number of model prediction requests for continuous experimentation",
+                "labels": ["experiment_variant"]
+            },
+            {
+                "name": "user_session_duration_seconds",
+                "type": "Histogram",
+                "description": "Duration of user sessions in seconds for continuous experimentation",
+                "buckets": [10, 30, 60, 120, 300, 600, 1200, 1800, 3600]
             }
         ]
     }
     return jsonify(metrics_description)
+
+@app.route('/track/click', methods=['POST'])
+def track_click():
+    """
+    Track model usage (deprecated - use /predict with experiment_variant instead)
+    ---
+    tags:
+      - Analytics
+    deprecated: true
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            experiment_variant:
+              type: string
+              example: "variant_a"
+              description: "A/B test variant identifier"
+    responses:
+      200:
+        description: Model usage tracked successfully
+      400:
+        description: Bad Request
+    """
+    logger.info("Model usage tracking request received (deprecated endpoint)")
+    
+    if not request.is_json:
+        logger.warning("Model usage tracking request not in JSON format")
+        return jsonify({"error": "Request must be JSON"}), 400
+        
+    data = request.get_json()
+    experiment_variant = data.get('experiment_variant', 'control')
+    
+    # Record the model usage
+    USER_CLICKS.labels(experiment_variant=experiment_variant).inc()
+    
+    logger.info("Model usage tracked: experiment_variant='{}'", experiment_variant)
+    
+    return jsonify({
+        "status": "success",
+        "message": "Model usage tracked successfully (deprecated - use /predict endpoint instead)",
+        "experiment_variant": experiment_variant
+    })
+
+@app.route('/track/session', methods=['POST'])
+def track_session():
+    """
+    Track user session duration for continuous experimentation
+    ---
+    tags:
+      - Analytics
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            duration:
+              type: number
+              example: 120.5
+              description: "Session duration in seconds"
+            experiment_variant:
+              type: string
+              example: "variant_a"
+              description: "A/B test variant identifier"
+          required:
+            - duration
+    responses:
+      200:
+        description: Session duration tracked successfully
+      400:
+        description: Bad Request
+    """
+    logger.info("Session tracking request received")
+    
+    if not request.is_json:
+        logger.warning("Session tracking request not in JSON format")
+        return jsonify({"error": "Request must be JSON"}), 400
+        
+    data = request.get_json()
+    
+    if 'duration' not in data:
+        logger.warning("Session tracking request missing 'duration' field")
+        return jsonify({"error": "Missing 'duration' field in request"}), 400
+    
+    try:
+        duration = float(data['duration'])
+        if duration < 0:
+            logger.warning("Invalid session duration: {}", duration)
+            return jsonify({"error": "Duration must be non-negative"}), 400
+    except (ValueError, TypeError):
+        logger.warning("Invalid duration format: {}", data['duration'])
+        return jsonify({"error": "Duration must be a valid number"}), 400
+    
+    experiment_variant = data.get('experiment_variant', 'control')  # Default to 'control'
+    
+    # Record the session duration
+    SESSION_DURATION.observe(duration)
+    
+    logger.info("Session tracked: duration={}s, experiment_variant='{}'", duration, experiment_variant)
+    
+    return jsonify({
+        "status": "success", 
+        "message": "Session duration tracked successfully",
+        "duration": duration,
+        "experiment_variant": experiment_variant
+    })
 
 if __name__ == '__main__':
     # For development only
