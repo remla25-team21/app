@@ -67,3 +67,5 @@ coverage/
 # Environment variables
 .env
 .env.*
+
+*.json
