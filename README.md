@@ -74,3 +74,30 @@ python app.py
 5. **Access the backend API**
 
 The API will be available at [http://localhost:5000](http://localhost:5000) with documentation at [http://localhost:5000/apidocs/](http://localhost:5000/apidocs/)
+
+## 📊 Metrics and Monitoring
+
+The app-service includes built-in Prometheus metrics for monitoring application performance and user behavior. These metrics are particularly useful for observability and measuring the effectiveness of the sentiment analysis model.
+
+### Available Metrics
+
+The following metrics are collected by the app-service:
+
+- **sentiment_predictions_total**: Counter that tracks total predictions by sentiment (positive/negative/unknown)
+- **sentiment_positive_ratio**: Gauge that shows the ratio of positive to total sentiments (0-1)
+- **sentiment_prediction_latency_seconds**: Histogram tracking prediction response times
+- **model_usage_total**: Counter tracking model usage by experiment variant (for A/B testing)
+- **user_session_duration_seconds**: Histogram tracking user session duration
+
+### Accessing Metrics
+
+Metrics can be accessed in two ways:
+
+1. **Prometheus Endpoint**:
+   - Access raw metrics at [http://localhost:5000/metrics](http://localhost:5000/metrics) when running locally
+   - In production, this endpoint is scraped by Prometheus
+
+2. **Metrics Info Endpoint**:
+   - More readable metrics metadata at [http://localhost:5000/metrics-info](http://localhost:5000/metrics-info)
+
+For the full monitoring setup, please refer to the [helm folder in operations repository](https://github.com/remla25-team21/operation/tree/main/kubernetes/helm/sentiment-analysis#prometheus-monitoring).
