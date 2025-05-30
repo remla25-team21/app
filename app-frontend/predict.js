@@ -12,15 +12,35 @@ async function send_review() {
     data: reviewText,
   };
 
-  try {
-    // Use relative URL or determine API URL based on current hostname
-    // This works in both development and production environments
-    const apiUrl =
-      window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1"
-        ? "http://localhost:5000/predict" // For local development
-        : "http://app-service:5000/predict"; // For docker network
+  // --- Determine the API Base URL ---
+  let apiBaseUrlToUse;
+  let frontendVersion = "v1"; // Default if not found
 
+  console.log("window app config", window.APP_CONFIG);
+
+  if (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) {
+    apiBaseUrlToUse = window.APP_CONFIG.API_BASE_URL;
+  } else {
+    if (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    ) {
+      apiBaseUrlToUse = "http://localhost:5000/predict";
+      console.log("Using localhost fallback API URL:", apiBaseUrlToUse);
+    } else {
+      apiBaseUrlToUse = "http://app-service:5000/predict";
+      console.log("Using 'docker network' fallback API URL:", apiBaseUrlToUse);
+    }
+  }
+
+  if (window.APP_CONFIG && window.APP_CONFIG.FRONTEND_VERSION) {
+    frontendVersion = window.APP_CONFIG.FRONTEND_VERSION;
+  }
+
+  // 3. Construct the full API URL
+  const apiUrl = `${apiBaseUrlToUse}/predict`;
+
+  try {
     // Show loading state
     predictionBox.style.display = "block";
     predictionSpan.textContent = "Analyzing...";
@@ -29,6 +49,7 @@ async function send_review() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-app-version": frontendVersion,
       },
       body: JSON.stringify(requestBody),
     });
@@ -68,49 +89,86 @@ async function send_review() {
 }
 
 // Get the selected restaurant from localStorage
-const selectedRestaurant = localStorage.getItem('selectedRestaurant') || 'Pizza Planet';
+const selectedRestaurant =
+  localStorage.getItem("selectedRestaurant") || "Pizza Planet";
 
 // Update the restaurant name display
-document.getElementById('restaurant-name-display').innerHTML = `🍽️ ${selectedRestaurant}`;
+document.getElementById(
+  "restaurant-name-display"
+).innerHTML = `🍽️ ${selectedRestaurant}`;
 document.title = `${selectedRestaurant} - Sentiment Review`;
 
 // Sample review data (in a real app, this would come from a database)
 const sampleReviews = {
   "McDonald's": [
-    { user: "User1", review: "Great value meals and fast service!", sentiment: "positive" },
-    { user: "User2", review: "The fries were cold when I got them.", sentiment: "negative" }
+    {
+      user: "User1",
+      review: "Great value meals and fast service!",
+      sentiment: "positive",
+    },
+    {
+      user: "User2",
+      review: "The fries were cold when I got them.",
+      sentiment: "negative",
+    },
   ],
-  "KFC": [
-    { user: "User3", review: "Best fried chicken in town!", sentiment: "positive" },
-    { user: "User4", review: "Too greasy and the wait was too long.", sentiment: "negative" }
+  KFC: [
+    {
+      user: "User3",
+      review: "Best fried chicken in town!",
+      sentiment: "positive",
+    },
+    {
+      user: "User4",
+      review: "Too greasy and the wait was too long.",
+      sentiment: "negative",
+    },
   ],
   "Burger King": [
-    { user: "User5", review: "The Whopper is still my favorite burger.", sentiment: "positive" },
-    { user: "User6", review: "Service was slow during lunch hour.", sentiment: "negative" }
+    {
+      user: "User5",
+      review: "The Whopper is still my favorite burger.",
+      sentiment: "positive",
+    },
+    {
+      user: "User6",
+      review: "Service was slow during lunch hour.",
+      sentiment: "negative",
+    },
   ],
   "Wendy's": [
-    { user: "User7", review: "Fresh ingredients and great salad options.", sentiment: "positive" },
-    { user: "User8", review: "The restaurant was not clean.", sentiment: "negative" }
+    {
+      user: "User7",
+      review: "Fresh ingredients and great salad options.",
+      sentiment: "positive",
+    },
+    {
+      user: "User8",
+      review: "The restaurant was not clean.",
+      sentiment: "negative",
+    },
   ],
   "Pizza Planet": [
-    { user: "User1", review: "This place is amazing!", sentiment: "positive" },
-    { user: "User2", review: "Worst restaurant in town!", sentiment: "negative" }
-  ]
+    {user: "User1", review: "This place is amazing!", sentiment: "positive"},
+    {user: "User2", review: "Worst restaurant in town!", sentiment: "negative"},
+  ],
 };
 
 // Load sample reviews for the selected restaurant
 
 function loadReviews() {
   const reviews = sampleReviews[selectedRestaurant] || [];
-  const container = document.getElementById('reviews-container');
+  const container = document.getElementById("reviews-container");
 
-  container.innerHTML = '';
+  container.innerHTML = "";
 
   reviews.forEach((item, index) => {
-    const emoji = item.sentiment === 'positive' ? '😄' : '☹️';
-    const reviewCard = document.createElement('div');
-    reviewCard.className = 'review-card';
-    reviewCard.innerHTML = `<p><strong>User${index + 1}:</strong> ${emoji} ${item.review}</p>`;
+    const emoji = item.sentiment === "positive" ? "😄" : "☹️";
+    const reviewCard = document.createElement("div");
+    reviewCard.className = "review-card";
+    reviewCard.innerHTML = `<p><strong>User${index + 1}:</strong> ${emoji} ${
+      item.review
+    }</p>`;
     container.appendChild(reviewCard);
   });
 }
