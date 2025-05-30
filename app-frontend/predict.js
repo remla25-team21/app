@@ -14,6 +14,7 @@ async function send_review() {
 
   // --- Determine the API Base URL ---
   let apiBaseUrlToUse;
+  let frontendVersion = "v1"; // Default if not found
 
   console.log("window app config", window.APP_CONFIG);
 
@@ -32,6 +33,10 @@ async function send_review() {
     }
   }
 
+  if (window.APP_CONFIG && window.APP_CONFIG.FRONTEND_VERSION) {
+    frontendVersion = window.APP_CONFIG.FRONTEND_VERSION;
+  }
+
   // 3. Construct the full API URL
   const apiUrl = `${apiBaseUrlToUse}/predict`;
 
@@ -44,6 +49,7 @@ async function send_review() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-app-version": frontendVersion,
       },
       body: JSON.stringify(requestBody),
     });
