@@ -8,6 +8,10 @@ async function send_review() {
     return;
   }
 
+  const requestBody = {
+    data: reviewText,
+  };
+
   // --- Determine the API Base URL ---
   let apiBaseUrlToUse;
 
