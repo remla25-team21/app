@@ -21,10 +21,10 @@ async function send_review() {
       window.location.hostname === "127.0.0.1"
     ) {
       apiBaseUrlToUse = "http://localhost:5000/predict";
-      console.log("Using localhost fallback API URL:", apiUrl);
+      console.log("Using localhost fallback API URL:", apiBaseUrlToUse);
     } else {
       apiBaseUrlToUse = "http://app-service:5000/predict";
-      console.log("Using 'docker network' fallback API URL:", apiUrl);
+      console.log("Using 'docker network' fallback API URL:", apiBaseUrlToUse);
     }
   }
 
