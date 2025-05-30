@@ -174,7 +174,6 @@ form {
     margin-top: 20px;
 }
 
-/* Responsive adjustments */
 @media (max-width: 600px) {
     .restaurant-selection {
         grid-template-columns: 1fr;
