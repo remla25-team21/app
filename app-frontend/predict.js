@@ -11,6 +11,9 @@ async function send_review() {
   // --- Determine the API Base URL ---
   let apiBaseUrlToUse;
 
+  print("window app config", window.APP_CONFIG);
+  print("window base url", window.APP_CONFIG.API_BASE_URL);
+
   if (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) {
     apiBaseUrlToUse = window.APP_CONFIG.API_BASE_URL;
   } else {
@@ -18,10 +21,10 @@ async function send_review() {
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1"
     ) {
-      apiUrl = "http://localhost:5000/predict";
+      apiBaseUrlToUse = "http://localhost:5000/predict";
       console.log("Using localhost fallback API URL:", apiUrl);
     } else {
-      apiUrl = "http://app-service:5000/predict";
+      apiBaseUrlToUse = "http://app-service:5000/predict";
       console.log("Using 'docker network' fallback API URL:", apiUrl);
     }
   }
