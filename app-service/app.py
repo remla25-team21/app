@@ -16,6 +16,11 @@ from config import (
     SWAGGER_TEMPLATE,
     get_model_service_url
 )
+from datetime import datetime
+import uuid
+
+# Global storage (replace with DB in production)
+RATINGS_FILE = 'ratings.json'
 
 # Configure loguru
 logger.remove()  # Remove default handler
@@ -304,6 +309,82 @@ def predict():
         PREDICTION_LATENCY.observe(elapsed_time)
         
         return jsonify({"error": error_msg}), 500
+
+def load_ratings():
+    if not os.path.exists(RATINGS_FILE):
+        return []
+    with open(RATINGS_FILE, 'r') as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return []
+
+def save_ratings(ratings):
+    with open(RATINGS_FILE, 'w') as f:
+        json.dump(ratings, f, indent=2)
+
+@app.route('/submit-rating', methods=['POST'])
+def submit_rating():
+    """
+    Submit a star rating
+    ---
+    tags:
+      - Ratings
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            review_text:
+              type: string
+            rating:
+              type: integer
+              minimum: 1
+              maximum: 5
+            sentiment:
+              type: string
+          required:
+            - review_text
+            - rating
+            - sentiment
+    responses:
+      200:
+        description: Rating submitted successfully
+      400:
+        description: Invalid input
+    """
+    data = request.get_json()
+    logger.info("Rating submission received: {}", data)
+    
+    # Validation
+    if not data or 'rating' not in data or 'review_text' not in data or 'sentiment' not in data:
+        return jsonify({"error": "Missing required fields"}), 400
+    
+    if not 1 <= data['rating'] <= 5:
+        return jsonify({"error": "Rating must be between 1-5"}), 400
+
+    # Create rating object
+    rating_data = {
+        "id": str(uuid.uuid4()),
+        "review_text": data['review_text'],
+        "rating": data['rating'],
+        "sentiment": data['sentiment'],
+        "timestamp": datetime.utcnow().isoformat(),
+        "restaurant": data.get('restaurant', 'Unknown')
+    }
+
+    # Save to file
+    try:
+        ratings = load_ratings()
+        ratings.append(rating_data)
+        save_ratings(ratings)
+        logger.info("Rating saved successfully")
+        return jsonify({"status": "success", "id": rating_data["id"]}), 200
+    except Exception as e:
+        logger.error("Error saving rating: {}", str(e))
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/metrics-info', methods=['GET'])
 def metrics_info():

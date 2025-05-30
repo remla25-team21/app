@@ -1,3 +1,42 @@
+// Global variable to track current review context for star rating
+let currentReviewContext = null;
+// Track the current rating for UI highlighting
+let satisfactionRating = 0;
+
+// Common function to update version display
+function updateVersionDisplay() {
+  const versionDisplay = document.getElementById('version-display');
+  if (!versionDisplay) return;
+
+  let frontendVersion = "1"; // Default version number
+  if (window.APP_CONFIG && window.APP_CONFIG.FRONTEND_VERSION) {
+    frontendVersion = window.APP_CONFIG.FRONTEND_VERSION.toString();
+
+    // Remove any existing 'v' prefix from the version
+    frontendVersion = frontendVersion.replace(/^v/i, '');
+  }
+
+  versionDisplay.textContent = `v${frontendVersion}`;
+}
+
+// Update version display on page load
+window.addEventListener('DOMContentLoaded', () => {
+  updateVersionDisplay();
+
+  // Review page specific setup
+  if (document.getElementById('reviews-container')) {
+    // Get the selected restaurant from localStorage
+    const selectedRestaurant = localStorage.getItem("selectedRestaurant") || "Pizza Planet";
+
+    // Update the restaurant name display
+    document.getElementById("restaurant-name-display").innerHTML = `🍽️ ${selectedRestaurant}`;
+    document.title = `${selectedRestaurant} - Sentiment Review`;
+
+    // Load sample reviews
+    loadReviews(selectedRestaurant);
+  }
+});
+
 async function send_review() {
   const reviewText = document.getElementById("review").value.trim();
   const predictionBox = document.getElementById("prediction-box");
@@ -14,9 +53,7 @@ async function send_review() {
 
   // --- Determine the API Base URL ---
   let apiBaseUrlToUse;
-  let frontendVersion = "v1"; // Default if not found
-
-  console.log("window app config", window.APP_CONFIG);
+  let frontendVersion = "1"; // Default version number
 
   if (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) {
     apiBaseUrlToUse = window.APP_CONFIG.API_BASE_URL;
@@ -25,19 +62,21 @@ async function send_review() {
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1"
     ) {
-      apiBaseUrlToUse = "http://localhost:5000/predict";
+      apiBaseUrlToUse = "http://localhost:5000";
       console.log("Using localhost fallback API URL:", apiBaseUrlToUse);
     } else {
-      apiBaseUrlToUse = "http://app-service:5000/predict";
+      apiBaseUrlToUse = "http://app-service:5000";
       console.log("Using 'docker network' fallback API URL:", apiBaseUrlToUse);
     }
   }
 
   if (window.APP_CONFIG && window.APP_CONFIG.FRONTEND_VERSION) {
-    frontendVersion = window.APP_CONFIG.FRONTEND_VERSION;
+    frontendVersion = window.APP_CONFIG.FRONTEND_VERSION.toString();
+    // Remove any existing 'v' prefix
+    frontendVersion = frontendVersion.replace(/^v/i, '');
   }
 
-  // 3. Construct the full API URL
+  // Construct the full API URL
   const apiUrl = `${apiBaseUrlToUse}/predict`;
 
   try {
@@ -49,7 +88,7 @@ async function send_review() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-app-version": frontendVersion,
+        "app-version": `v${frontendVersion}`,
       },
       body: JSON.stringify(requestBody),
     });
@@ -65,16 +104,26 @@ async function send_review() {
       predictionBox.style.display = "block";
       if (sentiment === 1) {
         predictionBox.className = "prediction-box prediction-positive";
-        predictionSpan.style.color = "#28a745"; // Green for positive
+        predictionSpan.style.color = "#28a745";
       } else if (sentiment === 0) {
         predictionBox.className = "prediction-box prediction-negative";
-        predictionSpan.style.color = "#dc3545"; // Red for negative
+        predictionSpan.style.color = "#dc3545";
       } else {
-        predictionBox.className = "prediction-box"; // Default style if result is not 0 or 1
+        predictionBox.className = "prediction-box";
       }
 
-      // Show feedback options after getting prediction
-      showFeedbackOptions();
+      // Show star rating after prediction
+      showStarRating();
+
+      addReviewToList(reviewText, sentiment === 1);
+
+      // Store the current review context for rating submission
+      const selectedRestaurant = localStorage.getItem("selectedRestaurant") || "Pizza Planet";
+      currentReviewContext = {
+        text: reviewText,
+        sentiment: sentiment === 1 ? "positive" : "negative",
+        restaurant: selectedRestaurant
+      };
     } else {
       throw new Error(result.error || "Unknown prediction error");
     }
@@ -86,77 +135,35 @@ async function send_review() {
   }
 }
 
-// Get the selected restaurant from localStorage
-const selectedRestaurant =
-  localStorage.getItem("selectedRestaurant") || "Pizza Planet";
-
-// Update the restaurant name display
-document.getElementById(
-  "restaurant-name-display"
-).innerHTML = `🍽️ ${selectedRestaurant}`;
-document.title = `${selectedRestaurant} - Sentiment Review`;
-
-// Sample review data (in a real app, this would come from a database)
+// Sample review data
 const sampleReviews = {
   "McDonald's": [
-    {
-      user: "User1",
-      review: "Great value meals and fast service!",
-      sentiment: "positive",
-    },
-    {
-      user: "User2",
-      review: "The fries were cold when I got them.",
-      sentiment: "negative",
-    },
+    { user: "User1", review: "Great value meals and fast service!", sentiment: "positive" },
+    { user: "User2", review: "The fries were cold when I got them.", sentiment: "negative" },
   ],
   KFC: [
-    {
-      user: "User3",
-      review: "Best fried chicken in town!",
-      sentiment: "positive",
-    },
-    {
-      user: "User4",
-      review: "Too greasy and the wait was too long.",
-      sentiment: "negative",
-    },
+    { user: "User3", review: "Best fried chicken in town!", sentiment: "positive" },
+    { user: "User4", review: "Too greasy and the wait was too long.", sentiment: "negative" },
   ],
   "Burger King": [
-    {
-      user: "User5",
-      review: "The Whopper is still my favorite burger.",
-      sentiment: "positive",
-    },
-    {
-      user: "User6",
-      review: "Service was slow during lunch hour.",
-      sentiment: "negative",
-    },
+    { user: "User5", review: "The Whopper is still my favorite burger.", sentiment: "positive" },
+    { user: "User6", review: "Service was slow during lunch hour.", sentiment: "negative" },
   ],
   "Wendy's": [
-    {
-      user: "User7",
-      review: "Fresh ingredients and great salad options.",
-      sentiment: "positive",
-    },
-    {
-      user: "User8",
-      review: "The restaurant was not clean.",
-      sentiment: "negative",
-    },
+    { user: "User7", review: "Fresh ingredients and great salad options.", sentiment: "positive" },
+    { user: "User8", review: "The restaurant was not clean.", sentiment: "negative" },
   ],
   "Pizza Planet": [
-    {user: "User1", review: "This place is amazing!", sentiment: "positive"},
-    {user: "User2", review: "Worst restaurant in town!", sentiment: "negative"},
+    { user: "User1", review: "This place is amazing!", sentiment: "positive" },
+    { user: "User2", review: "Worst restaurant in town!", sentiment: "negative" },
   ],
 };
 
 // Load sample reviews for the selected restaurant
-
-function loadReviews() {
+function loadReviews(selectedRestaurant) {
   const reviews = sampleReviews[selectedRestaurant] || [];
   const container = document.getElementById("reviews-container");
+  if (!container) return;
 
   container.innerHTML = "";
 
@@ -164,117 +171,156 @@ function loadReviews() {
     const emoji = item.sentiment === "positive" ? "😄" : "☹️";
     const reviewCard = document.createElement("div");
     reviewCard.className = "review-card";
-    reviewCard.innerHTML = `<p><strong>User${index + 1}:</strong> ${emoji} ${
-      item.review
-    }</p>`;
+    reviewCard.innerHTML = `<p><strong>User${index + 1}:</strong> ${emoji} ${item.review}</p>`;
     container.appendChild(reviewCard);
   });
 }
 
-// Load reviews when the page loads
-window.onload = loadReviews;
+// Function to show star rating options after prediction
+function showStarRating() {
+  let starContainer = document.getElementById("star-rating-container");
 
-// Function to show feedback options after prediction
-function showFeedbackOptions() {
-  // Check if feedback options already exist, create if they don't
-  let feedbackDiv = document.getElementById("feedback-options");
+  if (!starContainer) {
+    starContainer = document.createElement("div");
+    starContainer.id = "star-rating-container";
+    starContainer.className = "star-rating";
 
-  if (!feedbackDiv) {
-    // Create feedback options container
-    feedbackDiv = document.createElement("div");
-    feedbackDiv.id = "feedback-options";
-    feedbackDiv.className = "feedback-options";
+    const instruction = document.createElement("p");
+    instruction.textContent = "Rate your experience:";
+    starContainer.appendChild(instruction);
 
-    // Create question text
-    const questionPara = document.createElement("p");
-    questionPara.textContent = "Is this prediction correct?";
+    const starsDiv = document.createElement("div");
+    starsDiv.className = "stars";
 
-    // Create yes button
-    const yesButton = document.createElement("button");
-    yesButton.className = "feedback-btn";
-    yesButton.textContent = "Yes ✓";
-    yesButton.onclick = function () {
-      provideFeedback(true);
-    };
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement("span");
+      star.className = "star fa fa-star";
+      star.dataset.rating = i;
+      star.addEventListener("mouseenter", () => highlightStars(i));
+      star.addEventListener("mouseleave", () => highlightStars(satisfactionRating));
+      star.addEventListener("click", () => setRating(i));
+      starsDiv.appendChild(star);
+    }
 
-    // Create no button
-    const noButton = document.createElement("button");
-    noButton.className = "feedback-btn";
-    noButton.textContent = "No ✗";
-    noButton.onclick = function () {
-      provideFeedback(false);
-    };
+    starContainer.appendChild(starsDiv);
 
-    // Add all elements to the feedback div
-    feedbackDiv.appendChild(questionPara);
-    feedbackDiv.appendChild(yesButton);
-    feedbackDiv.appendChild(noButton);
+    const statusMsg = document.createElement("p");
+    statusMsg.id = "rating-status";
+    statusMsg.style.marginTop = "5px";
+    statusMsg.style.fontSize = "0.9em";
+    statusMsg.style.minHeight = "20px";
+    starContainer.appendChild(statusMsg);
 
-    // Add feedback div to the prediction box
-    document.getElementById("prediction-box").appendChild(feedbackDiv);
+    document.getElementById("prediction-box").appendChild(starContainer);
   } else {
-    // If it already exists, just make it visible
-    feedbackDiv.style.display = "block";
-  }
-
-  // Hide any previous feedback response
-  const feedbackResponse = document.getElementById("feedback-response");
-  if (feedbackResponse) {
-    feedbackResponse.style.display = "none";
+    starContainer.style.display = "block";
   }
 }
 
-// Handle user feedback on prediction
-function provideFeedback(isCorrect) {
-  // Create or get the feedback response element
-  let feedbackResponse = document.getElementById("feedback-response");
+// Helper function to highlight stars
+function highlightStars(rating) {
+  const stars = document.querySelectorAll(".star");
+  stars.forEach((star, index) => {
+    star.classList.remove("selected", "hover");
+    if (index + 1 <= rating) {
+      if (rating === satisfactionRating) {
+        star.classList.add("selected");
+      } else {
+        star.classList.add("hover");
+      }
+    }
+  });
+}
 
-  if (!feedbackResponse) {
-    feedbackResponse = document.createElement("div");
-    feedbackResponse.id = "feedback-response";
-    document.getElementById("prediction-box").appendChild(feedbackResponse);
+// Set user rating and submit to backend
+function setRating(rating) {
+  satisfactionRating = rating;
+  highlightStars(rating);
+
+  const statusMsg = document.getElementById("rating-status");
+  if (statusMsg) {
+    statusMsg.textContent = "Submitting rating...";
+    statusMsg.style.color = "#6c757d";
   }
 
-  const reviewText = document.getElementById("review").value.trim();
-  const sentiment = document.getElementById("prediction").textContent;
+  submitRating(rating)
+    .then(() => {
+      if (statusMsg) {
+        statusMsg.textContent = "Rating submitted successfully!";
+        statusMsg.style.color = "#28a745";
+      }
 
-  if (isCorrect) {
-    feedbackResponse.innerHTML =
-      '<p class="feedback-correct">Thank you for confirming! Your feedback helps improve our system.</p>';
+      setTimeout(() => {
+        const starContainer = document.getElementById("star-rating-container");
+        if (starContainer) starContainer.style.display = "none";
+        document.getElementById("review").value = "";
+        currentReviewContext = null;
+        satisfactionRating = 0;
+      }, 2000);
+    })
+    .catch(error => {
+      if (statusMsg) {
+        statusMsg.textContent = "Failed to submit rating. Please try again.";
+        statusMsg.style.color = "#dc3545";
+      }
+      console.error("Rating submission error:", error);
+    });
+}
 
-    // Add the review to the list of reviews
-    addReviewToList(reviewText, sentiment === "Positive");
+// Function to submit the rating to the backend
+async function submitRating(ratingValue) {
+  if (!currentReviewContext) {
+    throw new Error("No review context available for rating");
+  }
+
+  let apiBaseUrlToUse;
+  let frontendVersion = "1";
+
+  if (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) {
+    apiBaseUrlToUse = window.APP_CONFIG.API_BASE_URL;
   } else {
-    feedbackResponse.innerHTML =
-      '<p class="feedback-incorrect">Thanks for letting us know! We\'ll use this feedback to improve our predictions.</p>';
-
-    // In a real system, you would log this misclassification for model improvement
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      apiBaseUrlToUse = "http://localhost:5000";
+    } else {
+      apiBaseUrlToUse = "http://app-service:5000";
+    }
   }
 
-  feedbackResponse.style.display = "block";
+  if (window.APP_CONFIG && window.APP_CONFIG.FRONTEND_VERSION) {
+    frontendVersion = window.APP_CONFIG.FRONTEND_VERSION.toString().replace(/^v/i, '');
+  }
 
-  // Hide the feedback options
-  document.getElementById("feedback-options").style.display = "none";
+  const payload = {
+    review_text: currentReviewContext.text,
+    rating: ratingValue,
+    sentiment: currentReviewContext.sentiment,
+    restaurant: currentReviewContext.restaurant
+  };
 
-  // Clear the review input after some time
-  setTimeout(() => {
-    document.getElementById("review").value = "";
-  }, 1500);
+  const response = await fetch(`${apiBaseUrlToUse}/submit-rating`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "app-version": `v${frontendVersion}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
 }
 
 // Add a new review to the list of previous reviews
 function addReviewToList(reviewText, isPositive) {
   const reviewsContainer = document.getElementById("reviews-container");
-  if (!reviewsContainer) return; // Exit if container doesn't exist
+  if (!reviewsContainer) return;
 
   const emoji = isPositive ? "😄" : "☹️";
-
-  // Create new review element
   const reviewCard = document.createElement("div");
   reviewCard.className = "review-card";
   reviewCard.innerHTML = `<p><strong>You:</strong> ${emoji} ${reviewText}</p>`;
 
-  // Add it to the top of the list
   if (reviewsContainer.firstChild) {
     reviewsContainer.insertBefore(reviewCard, reviewsContainer.firstChild);
   } else {
