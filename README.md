@@ -88,6 +88,7 @@ The following metrics are collected by the app-service:
 - **sentiment_prediction_latency_seconds**: Histogram tracking prediction response times
 - **model_usage_total**: Counter tracking model usage by experiment variant (for A/B testing)
 - **user_session_duration_seconds**: Histogram tracking user session duration
+- **user_star_ratings**: Histogram tracking distribution of user satisfaction ratings on a 1-5 star scale
 
 ### Accessing Metrics
 

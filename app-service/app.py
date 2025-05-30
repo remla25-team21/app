@@ -74,6 +74,13 @@ SESSION_DURATION = Histogram(
     buckets=[10, 30, 60, 120, 300, 600, 1200, 1800, 3600]  # Buckets for session length
 )
 
+# 6. Histogram for tracking user star ratings distribution
+USER_RATINGS = Histogram(
+    'user_star_ratings',
+    'Distribution of user star ratings (1-5)',
+    buckets=[1, 2, 3, 4, 5, 6]  # Buckets for rating values (1-5 stars)
+)
+
 # Initialize counters for calculating the ratio
 # Note: These global variables may not behave as expected in a multi-worker setup
 # without specific prometheus_client multi-process configuration.
@@ -389,6 +396,10 @@ def submit_rating():
     if not 1 <= data['rating'] <= 5:
         return jsonify({"error": "Rating must be between 1-5"}), 400
 
+    # Record the star rating in Prometheus histogram
+    USER_RATINGS.observe(data['rating'])
+    logger.info("Recorded star rating: {} in metrics", data['rating'])
+
     # Create rating object
     rating_data = {
         "id": str(uuid.uuid4()),
@@ -450,6 +461,12 @@ def metrics_info():
                 "type": "Histogram",
                 "description": "Duration of user sessions in seconds for continuous experimentation",
                 "buckets": [10, 30, 60, 120, 300, 600, 1200, 1800, 3600]
+            },
+            {
+                "name": "user_star_ratings",
+                "type": "Histogram",
+                "description": "Distribution of user star ratings (1-5)",
+                "buckets": [1, 2, 3, 4, 5]
             }
         ]
     }
