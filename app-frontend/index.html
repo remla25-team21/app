@@ -1,41 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="UTF-8" />
-    <title>Restaurant Review Portal</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Restaurant Review Portal</title>
+        <link rel="stylesheet" href="styles.css">
+        <script src="/env-config.js"></script>
+    </head>
 
-<body>
-    <div class="container">
-        <h1>Restaurant Review Portal</h1>
-        <h2>Choose a restaurant to review</h2>
+    <body>
+        <div class="container">
+            <h1>Restaurant Review Portal</h1>
+            <h2>Choose a restaurant to review</h2>
 
-        <div class="restaurant-selection">
-            <div class="restaurant-card" onclick="selectRestaurant('McDonald\'s')">
-                <div class="restaurant-logo">🍔</div>
-                <h3>McDonald's</h3>
-            </div>
-            
-            <div class="restaurant-card" onclick="selectRestaurant('KFC')">
-                <div class="restaurant-logo">🍗</div>
-                <h3>KFC</h3>
-            </div>
-            
-            <div class="restaurant-card" onclick="selectRestaurant('Burger King')">
-                <div class="restaurant-logo">👑</div>
-                <h3>Burger King</h3>
-            </div>
-            
-            <div class="restaurant-card" onclick="selectRestaurant('Wendy\'s')">
-                <div class="restaurant-logo">🥪</div>
-                <h3>Wendy's</h3>
+            <div class="restaurant-selection">
+                <div class="restaurant-card"
+                    onclick="selectRestaurant('McDonald\'s')">
+                    <div class="restaurant-logo">🍔</div>
+                    <h3>McDonald's</h3>
+                </div>
+
+                <div class="restaurant-card" onclick="selectRestaurant('KFC')">
+                    <div class="restaurant-logo">🍗</div>
+                    <h3>KFC</h3>
+                </div>
+
+                <div class="restaurant-card"
+                    onclick="selectRestaurant('Burger King')">
+                    <div class="restaurant-logo">👑</div>
+                    <h3>Burger King</h3>
+                </div>
+
+                <div class="restaurant-card"
+                    onclick="selectRestaurant('Wendy\'s')">
+                    <div class="restaurant-logo">🥪</div>
+                    <h3>Wendy's</h3>
+                </div>
             </div>
         </div>
-    </div>
 
-    <script src="navigation.js"></script>
-</body>
+        <script src="navigation.js"></script>
+    </body>
 
 </html>

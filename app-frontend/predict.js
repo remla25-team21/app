@@ -11,8 +11,7 @@ async function send_review() {
   // --- Determine the API Base URL ---
   let apiBaseUrlToUse;
 
-  print("window app config", window.APP_CONFIG);
-  print("window base url", window.APP_CONFIG.API_BASE_URL);
+  console.log("window app config", window.APP_CONFIG);
 
   if (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) {
     apiBaseUrlToUse = window.APP_CONFIG.API_BASE_URL;
