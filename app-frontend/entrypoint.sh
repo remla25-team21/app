@@ -4,7 +4,7 @@ CONFIG_JS_PATH="/app/env-config.js"
 
 
 API_URL_TO_USE=${APP_API_BASE_URL:-"http://localhost:5000"} 
-FRONTEND_VERSION_TO_USE=${FRONTEND_VERSION:-"v_unknown"} 
+FRONTEND_VERSION_TO_USE=${FRONTEND_VERSION:-"v1"} 
 
 
 # Create the env-config.js file
