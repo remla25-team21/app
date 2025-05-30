@@ -1,10 +1,11 @@
+/* Existing styles */
 * {
     box-sizing: border-box;
 }
 
 body {
     font-family: 'Helvetica Neue', sans-serif;
-    background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+    background: linear-gradient(to right, #f5f7fa, #e2d2c3);
     margin: 0;
     padding: 40px 20px;
     display: flex;
@@ -21,7 +22,9 @@ body {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
     text-align: center;
     margin: 0;
     color: #333;
@@ -59,7 +62,7 @@ h3 {
 
 .restaurant-card:hover {
     transform: translateY(-5px);
-    border-color: #007bff;
+    border-color: #ff9e00;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -83,7 +86,7 @@ h3 {
 
 .review-card {
     background-color: #f0f4f8;
-    border-left: 5px solid #007bff;
+    border-left: 5px solid #ff9e00;
     padding: 15px 20px;
     margin-bottom: 15px;
     border-radius: 10px;
@@ -106,7 +109,7 @@ textarea {
 }
 
 button {
-    background-color: #007bff;
+    background-color: #ff9e00;
     color: white;
     padding: 12px 20px;
     font-size: 1rem;
@@ -114,10 +117,14 @@ button {
     border-radius: 10px;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #c27b09;
 }
 
 .secondary-btn {
@@ -157,39 +164,6 @@ form {
     color: #721c24;
 }
 
-.feedback-options {
-    margin-top: 15px;
-    text-align: center;
-}
-
-.feedback-options p {
-    margin-bottom: 10px;
-    font-weight: bold;
-}
-
-.feedback-btn {
-    padding: 8px 15px;
-    margin: 0 5px;
-    font-size: 0.9rem;
-}
-
-#feedback-response {
-    margin-top: 15px;
-    padding: 10px;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.feedback-correct {
-    color: #28a745;
-    font-weight: bold;
-}
-
-.feedback-incorrect {
-    color: #dc3545;
-    font-weight: bold;
-}
-
 .previous-reviews {
     margin-top: 30px;
 }
@@ -205,16 +179,114 @@ form {
     .restaurant-selection {
         grid-template-columns: 1fr;
     }
-    
+
     .container {
         padding: 20px;
     }
-    
+
     h1 {
         font-size: 1.8rem;
     }
-    
+
     h2 {
         font-size: 1.2rem;
+    }
+}
+
+.version-display {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    font-size: 0.8em;
+    z-index: 1000;
+    border: 1px solid #ddd;
+}
+
+.metric-display {
+    display: none;
+    /* Will be shown by JavaScript */
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-size: 14px;
+    border-top: 1px solid #dee2e6;
+    color: #495057;
+}
+
+/* Star Rating Styles */
+.star-rating {
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.star-rating p {
+    margin: 0 0 10px 0;
+    font-weight: 500;
+    color: #495057;
+}
+
+.stars {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.star {
+    font-size: 24px;
+    color: #ddd;
+    /* Default gray color for unselected stars */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 5px;
+    border-radius: 50%;
+}
+
+/* Hover effect */
+.star:hover,
+.star.hover {
+    color: #ffc107;
+    /* Gold color on hover */
+    transform: scale(1.1);
+}
+
+/* Selected state */
+.star.selected {
+    color: #ffc107;
+    /* Gold color for selected stars */
+    text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+/* Thank you message styling */
+.feedback-thanks {
+    color: #28a745 !important;
+    font-weight: bold !important;
+    font-size: 16px !important;
+    margin: 15px 0 !important;
+}
+
+/* Current rating display */
+#current-rating-display {
+    color: #495057;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 480px) {
+    .star {
+        font-size: 20px;
+        padding: 3px;
+    }
+
+    .stars {
+        gap: 3px;
     }
 }
