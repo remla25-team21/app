@@ -5,7 +5,7 @@
 
 body {
     font-family: 'Helvetica Neue', sans-serif;
-    background: linear-gradient(to right, #f5f7fa, #e2d2c3);
+    background: linear-gradient(to right, #f5f7fa, #c8c3e2);
     margin: 0;
     padding: 40px 20px;
     display: flex;
@@ -62,7 +62,7 @@ h3 {
 
 .restaurant-card:hover {
     transform: translateY(-5px);
-    border-color: #ff9e00;
+    border-color: #7b07ff;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -86,7 +86,7 @@ h3 {
 
 .review-card {
     background-color: #f0f4f8;
-    border-left: 5px solid #ff9e00;
+    border-left: 5px solid #7b07ff;
     padding: 15px 20px;
     margin-bottom: 15px;
     border-radius: 10px;
@@ -109,7 +109,7 @@ textarea {
 }
 
 button {
-    background-color: #ff9e00;
+    background-color: #7b07ff;
     color: white;
     padding: 12px 20px;
     font-size: 1rem;
@@ -124,7 +124,7 @@ button {
 }
 
 button:hover {
-    background-color: #c27b09;
+    background-color: #5009c2;
 }
 
 .secondary-btn {
@@ -252,16 +252,16 @@ form {
 /* Hover effect */
 .star:hover,
 .star.hover {
-    color: #ffc107;
+    color: #7b07ff;
     /* Gold color on hover */
     transform: scale(1.1);
 }
 
 /* Selected state */
 .star.selected {
-    color: #ffc107;
+    color: #7b07ff;
     /* Gold color for selected stars */
-    text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+    text-shadow: 0 0 10px rgba(135, 7, 255, 0.5);
 }
 
 /* Thank you message styling */
