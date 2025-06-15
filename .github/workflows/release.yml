@@ -10,10 +10,12 @@ permissions:
   packages: write
 
 jobs:
-  build:
+  release:
+    name: Build and Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Extract and Parse version info from tag
         run: |
@@ -64,3 +66,71 @@ jobs:
             ghcr.io/${{ github.repository }}-backend:${{ env.version_major }}.${{ env.version_minor }}.latest
             ghcr.io/${{ github.repository }}-backend:${{ env.version_major }}.latest
             ghcr.io/${{ github.repository }}-backend:latest
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  bump_version_on_main:
+    name: Bump version on main to next pre-release
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: success()
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Get released version from trigger
+        id: get_released_version
+        run: echo "RELEASED_VERSION_TAG=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Calculate Next Pre-release Version
+        id: calculate_version
+        run: |
+          RELEASED_VERSION=${GITHUB_REF#refs/tags/v}
+          IFS='.' read -r major minor patch <<< "$RELEASED_VERSION"
+          next_patch=$((patch + 1))
+          NEXT_VERSION_BASE="${major}.${minor}.${next_patch}"
+          echo "Next version base is: ${NEXT_VERSION_BASE}"
+
+          git fetch --tags
+          last_pre_release_tag=$(git tag --list "v${NEXT_VERSION_BASE}-pre.*" --sort=version:refname | tail -n 1)
+
+          next_counter=1
+          if [[ -n "$last_pre_release_tag" ]]; then
+            echo "Found last pre-release tag: $last_pre_release_tag"
+            last_counter=$(echo "$last_pre_release_tag" | grep -oE '[0-9]+$')
+            next_counter=$((last_counter + 1))
+          else
+            echo "No pre-release tags found for ${NEXT_VERSION_BASE}. Starting counter at 1."
+          fi
+
+          NEXT_TAG="v${NEXT_VERSION_BASE}-pre.${next_counter}"
+          echo "Calculated next tag: ${NEXT_TAG}"
+
+          echo "next_tag=${NEXT_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Optionally create a tag instead of a version file
+      - name: Create pre-release tag
+        run: |
+          git tag -a "${{ steps.calculate_version.outputs.next_tag }}" -m "Start next development cycle"
+          git push origin "${{ steps.calculate_version.outputs.next_tag }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
