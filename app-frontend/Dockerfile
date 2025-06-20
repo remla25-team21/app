@@ -1,25 +1,29 @@
-# Use an official Node.js image for serving static files
+# Stage 1: The "builder" stage (optional if not building anything)
+FROM node:20-alpine AS builder
+
+# You can include build steps here if needed
+
+# Stage 2: The "final" production stage
 FROM node:20-alpine
 
-# Set the working directory inside the container
+# Set the working directory
 WORKDIR /app
 
-# Copy the HTML, CSS, and JS files into the container
-COPY . /app/
-
-# Install 'serve' globally to serve the static files
+# Install 'serve' globally (this ensures all dependencies are included)
 RUN npm install -g serve
 
-# Copy the entrypoint script
+# Copy static app files
+COPY . .
+
+# Copy entrypoint script and make it executable
 COPY entrypoint.sh /entrypoint.sh
-# Make it executable
 RUN chmod +x /entrypoint.sh
 
-# Expose port 3000 (the port your app will run on)
+# Expose the desired port
 EXPOSE 3000
 
 # Set the entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
 
-# Use 'serve' to serve the static files from the current directory
+# Serve the static files
 CMD ["serve", ".", "-l", "3000"]
