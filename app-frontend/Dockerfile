@@ -1,8 +1,6 @@
 # Stage 1: The "builder" stage (optional if not building anything)
 FROM node:20-alpine AS builder
 
-# You can include build steps here if needed
-
 # Stage 2: The "final" production stage
 FROM node:20-alpine
 
