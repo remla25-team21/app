@@ -10,7 +10,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install 'serve' globally (this ensures all dependencies are included)
-RUN npm install -g serve
+RUN npm install -g serve chalk 
 
 # Copy static app files
 COPY . .
