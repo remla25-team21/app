@@ -1,6 +1,6 @@
 # REMLA25 Team 21 – Frontend Application
 
-This repository contains the backend service and frontend ui of the REMLA25 project developed by Team 21. The backend is built using Python and Flask, the frontend is developed using HTML, CSS and JavaScript and they are containerized using Docker for easy setup and deployment.
+This repository contains the backend service and frontend UI of the REMLA25 project developed by Team 21. The backend is built using Python and Flask, the frontend is developed using HTML, CSS, and JavaScript, and they are containerized using Docker for easy setup and deployment. 
 
 ## ✅ Prerequisites
 
