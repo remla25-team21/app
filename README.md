@@ -1,13 +1,13 @@
 # REMLA25 Team 21 – Frontend Application
 
-This repository contains the backend service and frontend ui of the REMLA25 project developed by Team 21. The backend is built using Python and Flask, the frontend is developed using HTML, CSS and JavaScript and they are containerized using Docker for easy setup and deployment.
+This repository contains the backend service and frontend UI of the REMLA25 project developed by Team 21. The backend is built using Python and Flask, the frontend is developed using HTML, CSS, and JavaScript and they are containerized using Docker for easy setup and deployment. 
 
-## ✅ Prerequisites
+## Prerequisites
 
 - Docker installed on your system ([Download Docker](https://www.docker.com/products/docker-desktop))
 - For development mode: Python 3.10+ and Node.js 20+
 
-## 🚀 Development
+## Development
 
 > [!NOTE]
 > The instructions below will only run the frontend and backend services. The complete application requires the `model-service` container as well. For full application deployment, please refer to the [operation](https://github.com/remla25-team21/operation) repository.
@@ -75,7 +75,7 @@ python app.py
 
 The API will be available at [http://localhost:5000](http://localhost:5000) with documentation at [http://localhost:5000/apidocs/](http://localhost:5000/apidocs/)
 
-## 📊 Metrics and Monitoring
+## Metrics and Monitoring
 
 The app-service includes built-in Prometheus metrics for monitoring application performance and user behavior. These metrics are particularly useful for observability and measuring the effectiveness of the sentiment analysis model.
 
@@ -101,4 +101,4 @@ Metrics can be accessed in two ways:
 2. **Metrics Info Endpoint**:
    - More readable metrics metadata at [http://localhost:5000/metrics-info](http://localhost:5000/metrics-info)
 
-For the full monitoring setup, please refer to the [helm folder in operations repository](https://github.com/remla25-team21/operation/tree/main/kubernetes/helm/sentiment-analysis#prometheus-monitoring).
+For the full monitoring setup, please refer to the [helm folder in operations repository](https://github.com/remla25-team21/operation/tree/main/kubernetes/helm/sentiment-analysis#prometheus-monitoring). 
